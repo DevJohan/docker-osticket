@@ -1,13 +1,8 @@
 FROM php:7.0-fpm-alpine
-MAINTAINER Martin Campbell <martin@campbellsoftware.co.uk>
 
 # setup workdir
 RUN mkdir /data
 WORKDIR /data
-
-# environment for osticket
-ENV OSTICKET_VERSION 1.10.1
-ENV HOME /data
 
 # requirements and PHP extensions
 RUN apk add --update \
@@ -19,21 +14,24 @@ RUN apk add --update \
     nginx \
     libpng \
     c-client \
-    openldap \
     libintl \
     libxml2 \
     icu \
     openssl && \
     apk add imap-dev libpng-dev curl-dev openldap-dev gettext-dev libxml2-dev icu-dev autoconf g++ make pcre-dev && \
-    docker-php-ext-install gd curl ldap mysqli sockets gettext mbstring xml intl opcache && \
+    docker-php-ext-install gd curl mysqli sockets gettext mbstring xml intl opcache && \
     docker-php-ext-configure imap --with-imap-ssl && \
     docker-php-ext-install imap && \
     pecl install apcu && docker-php-ext-enable apcu && \
     apk del imap-dev libpng-dev curl-dev openldap-dev gettext-dev libxml2-dev icu-dev autoconf g++ make pcre-dev && \
     rm -rf /var/cache/apk/*
 
+# environment for osticket
+ENV HOME /data
+ENV OSTICKET_VERSION 1.10.1
+
 # Download & install OSTicket
-RUN wget -nv -O osTicket.zip http://osticket.com/sites/default/files/download/osTicket-v${OSTICKET_VERSION}.zip && \
+RUN wget -nv -O osTicket.zip https://github.com/osTicket/osTicket/releases/download/v${OSTICKET_VERSION}/osTicket-v${OSTICKET_VERSION}.zip && \
     unzip osTicket.zip && \
     rm osTicket.zip && \
     chown -R www-data:www-data /data/upload/ && \
@@ -44,16 +42,8 @@ RUN wget -nv -O osTicket.zip http://osticket.com/sites/default/files/download/os
     chmod 700 /data/upload/setup_hidden
 
 # Download languages packs
-RUN wget -nv -O upload/include/i18n/fr.phar http://osticket.com/sites/default/files/download/lang/fr.phar && \
-    wget -nv -O upload/include/i18n/ar.phar http://osticket.com/sites/default/files/download/lang/ar.phar && \
-    wget -nv -O upload/include/i18n/pt_BR.phar http://osticket.com/sites/default/files/download/lang/pt_BR.phar && \
-    wget -nv -O upload/include/i18n/it.phar http://osticket.com/sites/default/files/download/lang/it.phar && \
-    wget -nv -O upload/include/i18n/es_ES.phar http://osticket.com/sites/default/files/download/lang/es_ES.phar && \
-    wget -nv -O upload/include/i18n/de.phar http://osticket.com/sites/default/files/download/lang/de.phar && \
+RUN wget -nv -O upload/include/i18n/sv_SE.phar http://osticket.com/sites/default/files/download/lang/sv_SE.phar && \
     mv upload/include/i18n upload/include/i18n.dist
-
-# Download LDAP plugin
-RUN wget -nv -O upload/include/plugins/auth-ldap.phar http://osticket.com/sites/default/files/download/plugin/auth-ldap.phar
 
 # Configure nginx, PHP, msmtp and supervisor
 COPY nginx.conf /etc/nginx/nginx.conf
